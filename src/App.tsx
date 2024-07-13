@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import "./App.css";
 import axios from "axios";
 import { AxiosResponse } from "axios";
+import InputMask from "react-input-mask";
 
 function App() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ function App() {
     setNumber(e.target.value);
   }
 
-  async function getUser(e: React.MouseEvent<HTMLButtonElement>) {
+  async function getUser(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setUsers([]);
     setStatus("loading...");
@@ -28,9 +29,11 @@ function App() {
     abortController.current.abort();
     abortController.current = new AbortController();
 
+    const cleanedNumber = number.replace(/\D/g, "");
+
     try {
       const response: AxiosResponse = await axios.get(
-        `http://localhost:3000/get-user?number=${number}&email=${email}`,
+        `http://localhost:3000/get-user?number=${cleanedNumber}&email=${email}`,
         { signal: abortController.current.signal }
       );
       setStatus("success!");
@@ -53,26 +56,31 @@ function App() {
   return (
     <>
       <div>
-        <form className="flex flex-col gap-5">
+        <form
+          onSubmit={(e: React.FormEvent<HTMLFormElement>) => getUser(e)}
+          className="flex flex-col gap-5"
+        >
           <div className="flex justify-between gap-10">
             <label htmlFor="email">Email </label>
             <input
               onChange={updateEmail}
               value={email}
               id="email"
-              type="text"
+              type="email"
               className="w-[300px]"
+              required
             ></input>
           </div>
           <div className="flex justify-between gap-10">
             <label htmlFor="number">Number </label>
-            <input
+            <InputMask
+              mask="99-99-99"
               onChange={updateNumber}
               value={number}
               id="number"
               type="text"
               className="w-[300px]"
-            ></input>
+            />
           </div>
           <p
             className={`h-[24px] text-start ${status === "loading..." ? "text-whiteDimmed" : status === "success!" ? "text-green" : "text-red-600"}`}
@@ -80,7 +88,8 @@ function App() {
             {status}
           </p>
           <button
-            onClick={(e: React.MouseEvent<HTMLButtonElement>) => getUser(e)}
+            type="submit"
+            // onClick={(e: React.MouseEvent<HTMLButtonElement>) => getUser(e)}
           >
             Submit
           </button>
